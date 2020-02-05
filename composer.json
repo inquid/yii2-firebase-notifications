@@ -1,5 +1,5 @@
 {
-    "name": "opensooq/yii2-firebase-notifications",
+    "name": "soareseneves/yii2-firebase-notifications",
     "description": "This extension will make send firebase notifications easy to do for the Yii2 framework",
     "type": "yii2-extension",
     "minimum-stability": "stable",
@@ -20,7 +20,7 @@
     },
     "autoload": {
         "psr-4": {
-            "opensooq\\firebase\\": ""
+            "soareseneves\\firebase\\": ""
         }
     }
 }
