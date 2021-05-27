@@ -6,12 +6,6 @@ This extension will make send firebase notifications easy to do for the Yii2 fra
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
-### Prerequisities
-
-Yii2 application 
-```
-composer require yiisoft/yii2
-```
 
 ### Installing
 
@@ -20,14 +14,13 @@ The preferred way to install this extension is through [composer](http://getcomp
 Either run
 
 ```
-php composer.phar require --prefer-dist "opensooq/yii2-firebase-notifications": "dev-master"
-
+composer require inquid/yii2-firebase-notifications
 ```
 
 or add
 
 ```
-"opensooq/yii2-firebase-notifications": "dev-master"
+"inquid/yii2-firebase-notifications": "dev-master"
 ```
 to the require section of your composer.json file.
 
