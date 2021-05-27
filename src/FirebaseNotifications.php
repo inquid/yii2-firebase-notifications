@@ -1,10 +1,11 @@
 <?php
+
 namespace inquid\firebase;
 
-use yii\base\BaseObject;
-use Yii;
-use yii\helpers\ArrayHelper;
 use Exception;
+use GuzzleHttp\Client;
+use yii\base\BaseObject;
+use yii\helpers\ArrayHelper;
 
 /**
  * @author Amr Alshroof
@@ -30,7 +31,7 @@ class FirebaseNotifications extends BaseObject
     {
         if (!$this->authKey) throw new Exception("Empty authKey");
     }
-    
+
     /**
      * send raw body to FCM
      * @param array $body
@@ -39,60 +40,49 @@ class FirebaseNotifications extends BaseObject
     public function send($body)
     {
         $headers = [
-            "Authorization:key={$this->authKey}",
-            'Content-Type: application/json',
-            'Expect: ',
+            "Authorization" => "key={$this->authKey}",
+            "Content-Type" => "application/json",
         ];
 
-        $ch = curl_init($this->apiUrl);
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_SSL_VERIFYHOST => $this->sslVerifyHost,
-            CURLOPT_SSL_VERIFYPEER => $this->sslVerifyPeer,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_BINARYTRANSFER => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HEADER         => false,
-            CURLOPT_FRESH_CONNECT  => false,
-            CURLOPT_FORBID_REUSE   => false,
-            CURLOPT_HTTPHEADER     => $headers,
-            CURLOPT_TIMEOUT        => $this->timeout,
-            CURLOPT_POSTFIELDS     => json_encode($body),
-        ]);
-        $result = curl_exec($ch);
-        if ($result === false) {
-            Yii::error('Curl failed: '.curl_error($ch).", with result=$result");
-            throw new Exception("Could not send notification");
+        try {
+            $client = new Client();
+            $request = $client->post($this->apiUrl, [
+                'headers' => $headers,
+                'body' => json_encode($body),
+            ]);
+            $response = $request->getBody();
+        } catch (Exception $e) {
+
+            throw new Exception($e->getMessage());
         }
-        $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($code<200 || $code>=300) {
-            Yii::error("got unexpected response code $code with result=$result");
-            throw new Exception("Could not send notification");
-        }
-        curl_close($ch);
-        $result = json_decode($result , true);
-        return $result;
+
+        return $response;
     }
 
     /**
      * high level method to send notification for a specific tokens (registration_ids) with FCM
      * see https://firebase.google.com/docs/cloud-messaging/http-server-ref
      * see https://firebase.google.com/docs/cloud-messaging/concept-options#notifications_and_data_messages
-     * 
-     * @param array  $tokens the registration ids
-     * @param array  $notification can be something like {title:, body:, sound:, badge:, click_action:, }
-     * @param array  $options other FCM options https://firebase.google.com/docs/cloud-messaging/http-server-ref#downstream-http-messages-json
+     *
+     * @param array $tokens the registration ids
+     * @param array $notification can be something like {title:, body:, sound:, badge:, click_action:, }
+     * @param array $options other FCM options https://firebase.google.com/docs/cloud-messaging/http-server-ref#downstream-http-messages-json
      * @return mixed
      */
-    public function sendNotification($tokens = [], $notification)
+    public function sendNotification($notification, $tokens = [])
     {
         $body = [
             'registration_ids' => $tokens,
-            'content_available' => 'true',
+            'content_available' => true,
             'priority' => 'high'
         ];
+
+        if (isset($notification['to'])) {
+            $notification['to'] = '/topics/' . $notification['to'];
+            unset($body['registration_ids']);
+        }
+
         $body = ArrayHelper::merge($body, $notification);
         return $this->send($body);
     }
-
 }
